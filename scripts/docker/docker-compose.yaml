@@ -15,8 +15,8 @@ services:
 
   harmony:
     build:
-      context: ./
-      dockerfile: ./Dockerfile
+      context: ../../
+      dockerfile: ./scripts/docker/Dockerfile
       args:
         - HARMONY_VERSION=v4.3.10
         - HARMONY_USER=harmony
