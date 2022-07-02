@@ -27,13 +27,31 @@ env_vars=$(printenv | awk -v RS='\n' -F= '/^HARMONY_/{print $1}')
 
 bls_keys_node="https://api.s0.b.hmny.io"
 bls_keys_shardid=${HARMONY_GENERAL_SHARDID:-0}
+
+# Set Default NetworkType to testnet
 network_type=${HARMONY_NETWORK_NETWORKTYPE:-testnet}
 
 # Generate default harmony.conf based on the NetworkType
 harmony config dump --network ${network_type} harmony.conf
 
+# Set Default NodeType to explorer
+node_type=${HARMONY_GENERAL_NODETYPE:-explorer}
+
+# Set Default Shard ID to 0 if explorer
+if [[ "${node_type}" == "explorer" ]] ; then
+  shard_id=${HARMONY_GENERAL_SHARDID:-0}
+  sed -i "s#ShardID.*#ShardID = ${shard_id}#"  ${CONFIG_FILE}
+fi
+
+# Set Default Console to true
+is_console=${HARMONY_LOG_CONSOLE:-true}
+
+# Update harmony configuration
+sed -i "\#\[General\]#I,\#^\s*\$# s#\(NodeType = \)\(.*\)#\1\"${node_type}\"#I"       ${CONFIG_FILE}
+sed -i "\#\[General\]#I,\#^\s*\$# s#\(NetworkType = \)\(.*\)#\1\"${network_type}\"#I" ${CONFIG_FILE}
+sed -i "\#\[Log\]#I,\#^\s*\$# s#\(Console = \)\(.*\)#\1${is_console}#I"               ${CONFIG_FILE}
+
 # Replace mainnet related configurations
-network_type=${HARMONY_NETWORK_NETWORKTYPE:-testnet}
 if [[ "${network_type}" == "mainnet" ]] ; then
   bls_keys_node="https://api.s0.t.hmny.io"
 fi
@@ -52,12 +70,6 @@ do
     sed -i "\#\[${group_name}\]#I,\#^\s*\$# s#\(${key_name} = \)\(.*\)#\1\"${val}\"#I"  ${CONFIG_FILE}
   fi
 done
-
-node_type=${HARMONY_GENERAL_NODETYPE:-explorer}
-# Enable Archival mode if explorer
-if [[ "${node_type}" == "explorer" ]]; then
-  sed -i "s#IsArchival.*#IsArchival = true#"  ${CONFIG_FILE}
-fi
 
 # Generate BLS key & pass for validator if not exist
 if [[ "${node_type}" == "validator" ]] && [[ ! "$(ls -A ${BLSKEYS_PATH})" ]] ; then
@@ -94,4 +106,4 @@ cat ${CONFIG_FILE}
 echo
 echo "#############################"
 
-exec yes no | "$@"
+exec "$@"
