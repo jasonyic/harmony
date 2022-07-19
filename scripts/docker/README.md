@@ -13,7 +13,18 @@ If your build machine has an ARM-based chip, like Apple silicon (M1), the image 
 docker build --platform linux/amd64 -t harmonyone/harmony -f Dockerfile .
 ```
 
-Before start the docker, dump the default config `harmony.conf`, make your customization. `harmony.conf`  should be mounted into default `HOME` directory `/harmony` inside the container. Assume `harmony.conf`, `blskeys` and `hmykey` are under `./config` in your current working directory, you can start your docker container with the following command:
+Before start the docker, dump the default config `harmony.conf` by running:
+
+for testnet
+```bash
+docker run -v $(pwd)/config:/harmony --rm --name harmony harmonyone/harmony harmony config dump --network testnet harmony.conf
+```
+for mainnet
+```bash
+docker run -v $(pwd)/config:/harmony --rm --name harmony harmonyone/harmony harmony config dump harmony.conf
+```
+
+make your customization. `harmony.conf` should be mounted into default `HOME` directory `/harmony` inside the container. Assume `harmony.conf`, `blskeys` and `hmykey` are under `./config` in your current working directory, you can start your docker container with the following command:
 ```bash
 docker run -v $(pwd)/config:/harmony --rm --name harmony -it harmonyone/harmony
 ```
