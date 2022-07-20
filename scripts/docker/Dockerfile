@@ -14,6 +14,7 @@ ENV HMY_PATH=${GOPATH}/${SRC_PATH}
 ENV PACKAGES libgmp-dev libssl-dev curl git \
 	psmisc dnsutils jq make gcc g++ bash tig tree
 
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y $PACKAGES --no-install-recommends
 
 WORKDIR ${HMY_PATH}
