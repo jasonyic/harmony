@@ -158,6 +158,5 @@ go-vet:
 go-test:
 	go test -vet=all -race ./...
 
-docker: linux_static
-	docker build --pull -t harmonyone/$(PKGNAME):latest \
-	-f scripts/docker/Dockerfile .
+docker:
+	docker build --pull -t harmonyone/$(PKGNAME):latest -f scripts/docker/Dockerfile .

@@ -1,4 +1,36 @@
+ARG GOPATH_DEFAULT=/root/go
+ARG SRC_PATH=src/github.com/harmony-one
+
+# Build harmony in a Go builder container
+FROM golang:1.17-bullseye as builder
+
+ARG GOPATH_DEFAULT
+ARG SRC_PATH
+
+ENV GOPATH=${GOPATH_DEFAULT}
+ENV GO111MODULE=on
+ENV HMY_PATH=${GOPATH}/${SRC_PATH}
+
+ENV PACKAGES libgmp-dev libssl-dev curl git \
+	psmisc dnsutils jq make gcc g++ bash tig tree 
+
+RUN apt-get update && apt-get install -y $PACKAGES
+
+RUN git clone https://github.com/harmony-one/harmony.git ${HMY_PATH}/harmony
+
+RUN git clone https://github.com/harmony-one/bls.git ${HMY_PATH}/bls
+
+RUN git clone https://github.com/harmony-one/mcl.git ${HMY_PATH}/mcl
+
+RUN git clone https://github.com/harmony-one/go-sdk.git ${HMY_PATH}/go-sdk
+
+RUN cd  ${HMY_PATH}/harmony && make linux_static
+
+# Pull harmony into a second stage deploy alpine container
 FROM alpine:3.16.0
+
+ARG GOPATH_DEFAULT
+ARG SRC_PATH
 
 ARG HARMONY_USER=harmony
 ARG HARMONY_USER_UID=1000
@@ -18,7 +50,7 @@ RUN echo "[ ! -z \"\$TERM\" -a -r /etc/motd ] && cat /etc/motd" >> /etc/bash/bas
 
 WORKDIR ${HARMONY_HOME}
 
-COPY bin/harmony /usr/local/bin/
+COPY --from=builder ${GOPATH_DEFAULT}/${SRC_PATH}/harmony/bin/harmony /usr/local/bin/
 
 # Use testnet configuration as default
 RUN chmod +x  /usr/local/bin/harmony  \
@@ -29,8 +61,8 @@ VOLUME /data
 
 USER ${HARMONY_USER_UID}:${HARMONY_USER_GID}
 
-# NODE p2p (9000),rpc (9500), ws (9800)
-EXPOSE 9000 9500 9800
+# default base port, rpc port and rest port
+EXPOSE 9000/tcp 9500/tcp 9800/tcp 6000/tcp
 
 ENTRYPOINT ["tini", "--"]
 CMD ["harmony", "-c", "harmony.conf"]
