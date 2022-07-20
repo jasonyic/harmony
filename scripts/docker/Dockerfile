@@ -12,19 +12,19 @@ ENV GO111MODULE=on
 ENV HMY_PATH=${GOPATH}/${SRC_PATH}
 
 ENV PACKAGES libgmp-dev libssl-dev curl git \
-	psmisc dnsutils jq make gcc g++ bash tig tree 
+	psmisc dnsutils jq make gcc g++ bash tig tree
 
-RUN apt-get update && apt-get install -y $PACKAGES
+RUN apt-get update && apt-get install -y $PACKAGES --no-install-recommends
 
-RUN git clone https://github.com/harmony-one/harmony.git ${HMY_PATH}/harmony
+WORKDIR ${HMY_PATH}
 
-RUN git clone https://github.com/harmony-one/bls.git ${HMY_PATH}/bls
+RUN git clone https://github.com/harmony-one/harmony.git harmony \
+  && git clone https://github.com/harmony-one/bls.git bls \
+  && git clone https://github.com/harmony-one/mcl.git mcl \
+  && git clone https://github.com/harmony-one/go-sdk.git go-sdk
 
-RUN git clone https://github.com/harmony-one/mcl.git ${HMY_PATH}/mcl
-
-RUN git clone https://github.com/harmony-one/go-sdk.git ${HMY_PATH}/go-sdk
-
-RUN cd  ${HMY_PATH}/harmony && make linux_static
+WORKDIR ${HMY_PATH}/harmony
+RUN make linux_static
 
 # Pull harmony into a second stage deploy alpine container
 FROM alpine:3.16.0
